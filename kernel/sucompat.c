@@ -115,7 +115,7 @@ int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
 	return 0;
 }
 
-#ifdef CONFIG_KPROBES
+#ifdef CONFIG_KSU_USE_KPROBES
 
 static int faccessat_handler_pre(struct kprobe *p, struct pt_regs *regs)
 {
@@ -187,7 +187,7 @@ static struct kprobe execve_kp = {
 // sucompat: permited process can execute 'su' to gain root access.
 void ksu_enable_sucompat()
 {
-#ifdef CONFIG_KPROBES
+#ifdef CONFIG_KSU_USE_KPROBES
 	int ret;
 	ret = register_kprobe(&execve_kp);
 	pr_info("sucompat: execve_kp: %d\n", ret);
