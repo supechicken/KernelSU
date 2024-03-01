@@ -54,10 +54,10 @@ jobs:
         run: |
           export LLVM_VERSION=18
 
-          curl -L https://apt.llvm.org/llvm.sh | bash -s "${LLVM_VERSION}"
+          curl -L https://apt.llvm.org/llvm.sh | sudo bash -s "${LLVM_VERSION}"
 
           for f in clang clang++ ld.lld llvm-objdump llvm-ar llvm-nm llvm-strip llvm-objcopy llvm-readelf; do
-            ln -sf $f-$LLVM_VERSION $f
+            sudo ln -sf $f-$LLVM_VERSION $f
           done
 
       - name: Checkout KernelSU
