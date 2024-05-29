@@ -16,4 +16,11 @@ config KSU_DEBUG
 	help
 	  Enable KernelSU debug mode.
 
+config KSU_KPROBES
+	bool "KPROBES support for KernelSU"
+	depends on KSU
+	default n
+	help
+		Enable KPROBES support for KernelSU
+
 endmenu
