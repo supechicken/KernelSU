@@ -8,6 +8,7 @@
 #include <asm/syscall.h>
 #include <linux/ptrace.h>
 #include <linux/slab.h>
+#include <trace/events/sched.h>
 #include <trace/events/syscalls.h>
 
 #include "allowlist.h"
@@ -71,13 +72,8 @@ static void ksu_mark_running_process_locked()
         }
         int uid = task_uid(t).val;
         const struct cred *cred = get_task_cred(t);
-#ifdef CONFIG_KSU_SELINUX
         bool ksu_root_process = uid == 0 && is_task_ksu_domain(cred);
         bool is_zygote_process = is_zygote(cred);
-#else
-        bool ksu_root_process = uid == 0;
-        bool is_zygote_process = false;
-#endif
         bool is_shell = uid == 2000;
         // before boot completed, we shall mark init for marking zygote
         bool is_init = t->pid == 1;
@@ -203,7 +199,10 @@ static int syscall_regfunc_handler(struct kretprobe_instance *ri,
 {
     unsigned long flags;
     spin_lock_irqsave(&tracepoint_reg_lock, flags);
-#ifndef CONFIG_KSU_NON_ANDROID
+#ifdef CONFIG_KSU_NON_ANDROID
+    // unmark all process for security reason
+    ksu_unmark_all_process();
+#else
     if (tracepoint_reg_count < 1) {
         // while install our tracepoint, mark our processes
         ksu_mark_running_process_locked();
@@ -254,7 +253,6 @@ static inline bool check_syscall_fastpath(int nr)
 }
 
 // Unmark init's child that are not zygote, adbd or ksud
-#ifdef CONFIG_KSU_SELINUX
 int ksu_handle_init_mark_tracker(const char __user **filename_user)
 {
     char path[64];
@@ -287,7 +285,6 @@ int ksu_handle_init_mark_tracker(const char __user **filename_user)
 
     return 0;
 }
-#endif
 
 #ifdef CONFIG_HAVE_SYSCALL_TRACEPOINTS
 // Generic sys_enter handler that dispatches to specific handlers
@@ -319,15 +316,11 @@ static void ksu_sys_enter_handler(void *data, struct pt_regs *regs, long id)
             if (id == __NR_execve) {
                 const char __user **filename_user =
                     (const char __user **)&PT_REGS_PARM1(regs);
-#ifdef CONFIG_KSU_SELINUX
-                if (current->pid != 1 && is_init(get_current_cred())) {
+                if (task_pid_vnr(current) != 1 && is_init(get_current_cred())) {
                     ksu_handle_init_mark_tracker(filename_user);
                 } else {
                     ksu_handle_execve_sucompat(filename_user, NULL, NULL, NULL);
                 }
-#else
-                ksu_handle_execve_sucompat(filename_user, NULL, NULL, NULL);
-#endif
                 return;
             }
         }
@@ -340,6 +333,17 @@ static void ksu_sys_enter_handler(void *data, struct pt_regs *regs, long id)
             ksu_handle_setresuid(ruid, euid, suid);
             return;
         }
+    }
+}
+#endif
+
+#ifdef CONFIG_KSU_NON_ANDROID
+void ksu_exec_handler(void *data, struct task_struct *p, pid_t old_pid, struct linux_binprm *bprm)
+{
+    // Set tracepoint flag for init process
+    if (task_pid_vnr(p) == 1 && strcmp(bprm->filename, "/system/bin/init") == 0) {
+        pr_info("hook_manager: Android init namespace started\n");
+        ksu_set_task_tracepoint_flag(p);
     }
 }
 #endif
@@ -371,6 +375,17 @@ void ksu_syscall_hook_manager_init(void)
     }
 #endif
 
+#ifdef CONFIG_KSU_NON_ANDROID
+    ret = register_trace_sched_process_exec(ksu_exec_handler, NULL);
+
+    if (ret) {
+        pr_err("hook_manager: failed to register sched_process_exec tracepoint: %d\n",
+               ret);
+    } else {
+        pr_info("hook_manager: sched_process_exec tracepoint registered\n");
+    }
+#endif
+
     ksu_setuid_hook_init();
     ksu_sucompat_init();
 }
@@ -382,6 +397,12 @@ void ksu_syscall_hook_manager_exit(void)
     unregister_trace_sys_enter(ksu_sys_enter_handler, NULL);
     tracepoint_synchronize_unregister();
     pr_info("hook_manager: sys_enter tracepoint unregistered\n");
+#endif
+
+#ifdef CONFIG_KSU_NON_ANDROID
+    unregister_trace_sched_process_exec(ksu_exec_handler, NULL);
+    tracepoint_synchronize_unregister();
+    pr_info("hook_manager: sched_process_exec tracepoint unregistered\n");
 #endif
 
 #ifdef CONFIG_KRETPROBES
