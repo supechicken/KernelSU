@@ -60,7 +60,7 @@ bool ksu_late_loaded;
 
 int __init kernelsu_init(void)
 {
-#ifdef MODULE
+#if 0
     ksu_late_loaded = (current->pid != 1);
 #else
     ksu_late_loaded = false;
