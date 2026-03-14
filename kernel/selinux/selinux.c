@@ -1,4 +1,3 @@
-#ifdef CONFIG_KSU_SELINUX
 #include "selinux.h"
 #include "linux/cred.h"
 #include "linux/sched.h"
@@ -7,6 +6,7 @@
 #include "../klog.h" // IWYU pragma: keep
 #include "../ksu.h"
 
+#ifdef CONFIG_KSU_SELINUX
 /*
  * Cached SID values for frequently checked contexts.
  * These are resolved once at init and used for fast u32 comparison
@@ -207,5 +207,42 @@ bool is_zygote(const struct cred *cred)
 bool is_init(const struct cred *cred)
 {
     return is_sid_match(cred, cached_init_sid, INIT_CONTEXT);
+}
+#else
+// Check zygote/init by pathname instead
+static bool compare_exec_filename(const char *filename) {
+    struct file *exe_file;
+    bool result;
+    char *buf, *pathname;
+
+    buf = (char *) kzalloc(PATH_MAX, GFP_KERNEL);
+
+    if (!buf) {
+        pr_err("compare_exec_filename failed to allocate memory\n");
+        return false;
+    }
+
+    memset(buf, 0, PATH_MAX);
+
+    exe_file = get_mm_exe_file(current->mm);
+    pathname = exe_file ? d_path(&exe_file->f_path, buf, PATH_MAX) : NULL;
+    result = !!strstr(buf, filename);
+
+    fput(exe_file);
+    kfree(buf);
+    return result;
+}
+
+bool is_task_ksu_domain(const struct cred *__unused_cred)
+{
+    return true;
+}
+
+bool is_zygote(const struct cred *__unused_cred) {
+    return compare_exec_filename("/app_process") || compare_exec_filename("/zygote");
+}
+
+bool is_init(const struct cred *__unused_cred) {
+    return compare_exec_filename("/init");
 }
 #endif
