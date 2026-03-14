@@ -258,6 +258,8 @@ int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
                          sizeof(system_bin_init) - 1) &&
                  argv)) {
         struct callback_head *cb;
+
+#ifdef CONFIG_KSU_NON_ANDROID
         if (current->pid == 1) {
             cb = kzalloc(sizeof(*cb), GFP_ATOMIC);
             if (cb) {
@@ -270,12 +272,13 @@ int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
                 pr_warn("ksu_mark_all_process failed to allocate task work\n");
             }
         }
+#endif
 
         char buf[16];
         if (!init_second_stage_executed &&
             check_argv(*argv, 1, "second_stage", buf, sizeof(buf))) {
             pr_info("/system/bin/init second_stage executed\n");
-#if 0
+#ifdef CONFIG_KSU_SELINUX
             cb = kzalloc(sizeof(*cb), GFP_ATOMIC);
             if (cb) {
                 cb->func = ksu_initialize_selinux_tw_func;
