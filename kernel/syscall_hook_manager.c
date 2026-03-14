@@ -201,10 +201,10 @@ static int syscall_regfunc_handler(struct kretprobe_instance *ri,
     spin_lock_irqsave(&tracepoint_reg_lock, flags);
     if (tracepoint_reg_count < 1) {
         // while install our tracepoint, mark our processes
-        ksu_mark_running_process_locked();
+        // ksu_mark_running_process_locked();
     } else if (tracepoint_reg_count == 1) {
         // while other tracepoint first added, mark all processes
-        ksu_mark_all_process();
+        // ksu_mark_all_process();
     }
     tracepoint_reg_count++;
     spin_unlock_irqrestore(&tracepoint_reg_lock, flags);
