@@ -68,7 +68,7 @@ module_param(allow_shell, bool, 0);
 
 int __init kernelsu_init(void)
 {
-#ifdef MODULE
+#if 0
     ksu_late_loaded = (current->pid != 1);
 #else
     ksu_late_loaded = false;
