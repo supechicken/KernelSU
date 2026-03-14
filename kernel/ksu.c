@@ -68,7 +68,7 @@ module_param(allow_shell, bool, 0);
 
 int __init kernelsu_init(void)
 {
-#if 0
+#if defined(MODULE) && !defined(CONFIG_KSU_NON_ANDROID)
     ksu_late_loaded = (current->pid != 1);
 #else
     ksu_late_loaded = false;
@@ -98,7 +98,7 @@ int __init kernelsu_init(void)
 
     if (ksu_late_loaded) {
         pr_info("late load mode, skipping kprobe hooks\n");
-#if 0
+#ifdef CONFIG_KSU_SELINUX
         apply_kernelsu_rules();
         cache_sid();
         setup_ksu_cred();

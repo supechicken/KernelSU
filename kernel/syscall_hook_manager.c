@@ -199,13 +199,15 @@ static int syscall_regfunc_handler(struct kretprobe_instance *ri,
 {
     unsigned long flags;
     spin_lock_irqsave(&tracepoint_reg_lock, flags);
+#ifndef CONFIG_KSU_NON_ANDROID
     if (tracepoint_reg_count < 1) {
         // while install our tracepoint, mark our processes
-        // ksu_mark_running_process_locked();
+        ksu_mark_running_process_locked();
     } else if (tracepoint_reg_count == 1) {
         // while other tracepoint first added, mark all processes
-        // ksu_mark_all_process();
+        ksu_mark_all_process();
     }
+#endif
     tracepoint_reg_count++;
     spin_unlock_irqrestore(&tracepoint_reg_lock, flags);
     return 0;
@@ -217,6 +219,7 @@ static int syscall_unregfunc_handler(struct kretprobe_instance *ri,
     unsigned long flags;
     spin_lock_irqsave(&tracepoint_reg_lock, flags);
     tracepoint_reg_count--;
+#ifndef CONFIG_KSU_NON_ANDROID
     if (tracepoint_reg_count <= 0) {
         // while no tracepoint left, unmark all processes
         ksu_unmark_all_process();
@@ -224,6 +227,7 @@ static int syscall_unregfunc_handler(struct kretprobe_instance *ri,
         // while just our tracepoint left, unmark disallowed processes
         ksu_mark_running_process_locked();
     }
+#endif
     spin_unlock_irqrestore(&tracepoint_reg_lock, flags);
     return 0;
 }

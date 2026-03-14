@@ -11,6 +11,24 @@ config KSU
 	  To compile as a module, choose M here: the
 	  module will be called kernelsu.
 
+config KSU_NON_ANDROID
+	bool "KernelSU for non-Android Linux distributions"
+	depends on KSU
+	default n
+	help
+	  Enable running KernelSU on non-Android Linux
+	  distributions.
+	  This will disable PID=1 checker.
+	  Consider enabling this when targetting Waydroid.
+
+config KSU_SELINUX
+	bool "SELinux for KernelSU"
+	depends on KSU && SECURITY_SELINUX
+	default y
+	help
+	  Enable SELinux for KernelSU.
+	  Requires CONFIG_SECURITY_SELINUX to work.
+
 config KSU_DEBUG
 	bool "KernelSU debug mode"
 	depends on KSU
