@@ -98,11 +98,11 @@ int __init kernelsu_init(void)
 
     if (ksu_late_loaded) {
         pr_info("late load mode, skipping kprobe hooks\n");
-
+#if 0
         apply_kernelsu_rules();
         cache_sid();
         setup_ksu_cred();
-
+#endif
         // Grant current process (ksud late-load) root
         // with KSU SELinux domain before enforcing SELinux, so it
         // can continue to access /data/app etc. after enforcement.
