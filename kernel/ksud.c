@@ -275,6 +275,7 @@ int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
         if (!init_second_stage_executed &&
             check_argv(*argv, 1, "second_stage", buf, sizeof(buf))) {
             pr_info("/system/bin/init second_stage executed\n");
+#if 0
             cb = kzalloc(sizeof(*cb), GFP_ATOMIC);
             if (cb) {
                 cb->func = ksu_initialize_selinux_tw_func;
@@ -286,6 +287,7 @@ int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
                 pr_warn(
                     "ksu_initialize_selinux failed to allocate task work\n");
             }
+#endif
             init_second_stage_executed = true;
         }
     }
