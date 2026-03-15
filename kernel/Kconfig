@@ -24,7 +24,7 @@ config KSU_NON_ANDROID
 config KSU_SELINUX
 	bool "SELinux for KernelSU"
 	depends on KSU && SECURITY_SELINUX
-	default y
+	default n
 	help
 	  Enable SELinux for KernelSU.
 	  Requires CONFIG_SECURITY_SELINUX to work.
