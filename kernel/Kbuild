@@ -24,6 +24,19 @@ ccflags-y += -I$(objtree)/security/selinux -include $(srctree)/include/uapi/asm-
 
 obj-$(CONFIG_KSU) += kernelsu.o
 
+# Configs
+ifeq ($(CONFIG_KSU_NON_ANDROID),y)
+ccflags-y += -DCONFIG_KSU_NON_ANDROID
+endif
+
+ifeq ($(CONFIG_KSU_SELINUX),y)
+ccflags-y += -DCONFIG_KSU_SELINUX
+endif
+
+ifeq ($(CONFIG_KSU_DEBUG),y)
+ccflags-y += -DCONFIG_KSU_DEBUG
+endif
+
 MDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 ifndef KSU_GIT_VERSION
