@@ -141,10 +141,14 @@ void kernelsu_exit(void)
 
     ksu_throne_tracker_exit();
 
-    ksu_observer_exit();
-
-    if (!ksu_late_loaded)
+    if (ksu_late_loaded)
+    {
+        ksu_observer_exit();
+    }
+    else
+    {
         ksu_ksud_exit();
+    }
 
     ksu_syscall_hook_manager_exit();
 
