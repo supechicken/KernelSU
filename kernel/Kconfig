@@ -29,6 +29,15 @@ config KSU_SELINUX
 	  Enable SELinux for KernelSU.
 	  Requires CONFIG_SECURITY_SELINUX to work.
 
+config CONFIG_KSU_HANDLE_INPUT_EVENT
+	bool "KernelSU handle input events using Kprobes"
+	depends on KSU
+	default n
+	help
+	  Enable input events handlding for KernelSU via Kprobes.
+	  This only checks for KEY_VOLUMEDOWN. Since most of x86
+	  devices does not have KEY_VOLUMEDOWN, this is unneeded.
+
 config KSU_DEBUG
 	bool "KernelSU debug mode"
 	depends on KSU

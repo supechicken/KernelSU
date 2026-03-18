@@ -33,6 +33,10 @@ ifeq ($(CONFIG_KSU_SELINUX),y)
 ccflags-y += -DCONFIG_KSU_SELINUX
 endif
 
+ifeq ($(CONFIG_KSU_HANDLE_INPUT_EVENT),y)
+ccflags-y += -DCONFIG_KSU_HANDLE_INPUT_EVENT
+endif
+
 ifeq ($(CONFIG_KSU_DEBUG),y)
 ccflags-y += -DCONFIG_KSU_DEBUG
 endif
