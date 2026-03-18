@@ -693,12 +693,17 @@ void ksu_ksud_init()
     ret = register_kretprobe(&sys_fstat_kp);
     pr_info("ksud: sys_fstat_kp: %d\n", ret);
 
+#ifdef CONFIG_KSU_HANDLE_INPUT_EVENT
     ret = register_kprobe(&input_event_kp);
     pr_info("ksud: input_event_kp: %d\n", ret);
+#endif
 
     INIT_WORK(&stop_init_rc_hook_work, do_stop_init_rc_hook);
     INIT_WORK(&stop_execve_hook_work, do_stop_execve_hook);
+
+#ifdef CONFIG_KSU_HANDLE_INPUT_EVENT
     INIT_WORK(&stop_input_hook_work, do_stop_input_hook);
+#endif
 }
 
 void ksu_ksud_exit()
@@ -706,5 +711,8 @@ void ksu_ksud_exit()
     unregister_kprobe(&execve_kp);
     // this should be done before unregister sys_read_kp
     // unregister_kprobe(&sys_read_kp);
+
+#ifdef CONFIG_KSU_HANDLE_INPUT_EVENT
     unregister_kprobe(&input_event_kp);
+#endif
 }
