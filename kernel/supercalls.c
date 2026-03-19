@@ -150,6 +150,7 @@ static int do_set_sepolicy(void __user *arg)
 
 static int do_check_safemode(void __user *arg)
 {
+#ifdef CONFIG_KSU_HANDLE_INPUT_EVENT
     struct ksu_check_safemode_cmd cmd;
 
     cmd.in_safe_mode = ksu_is_safe_mode();
@@ -162,7 +163,7 @@ static int do_check_safemode(void __user *arg)
         pr_err("check_safemode: copy_to_user failed\n");
         return -EFAULT;
     }
-
+#endif
     return 0;
 }
 
