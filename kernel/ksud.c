@@ -634,12 +634,22 @@ static void do_stop_input_hook(struct work_struct *work)
 
 static void stop_init_rc_hook()
 {
+    static bool rc_hook_stopped = false;
+    if (rc_hook_stopped) {
+        return;
+    }
+    rc_hook_stopped = true;
     bool ret = schedule_work(&stop_init_rc_hook_work);
     pr_info("unregister init_rc_hook kprobe: %d!\n", ret);
 }
 
 static void stop_execve_hook()
 {
+    static bool execve_hook_stopped = false;
+    if (execve_hook_stopped) {
+        return;
+    }
+    execve_hook_stopped = true;
     bool ret = schedule_work(&stop_execve_hook_work);
     pr_info("unregister execve kprobe: %d!\n", ret);
 }
@@ -684,11 +694,11 @@ void ksu_ksud_init()
 
 void ksu_ksud_exit()
 {
-    unregister_kprobe(&execve_kp);
+    stop_execve_hook();
     // this should be done before unregister sys_read_kp
     stop_init_rc_hook();
 
 #ifdef CONFIG_KSU_HANDLE_INPUT_EVENT
-    unregister_kprobe(&input_event_kp);
+    stop_input_hook();
 #endif
 }
