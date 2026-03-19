@@ -686,7 +686,7 @@ void ksu_ksud_exit()
 {
     unregister_kprobe(&execve_kp);
     // this should be done before unregister sys_read_kp
-    // unregister_kprobe(&sys_read_kp);
+    stop_init_rc_hook();
 
 #ifdef CONFIG_KSU_HANDLE_INPUT_EVENT
     unregister_kprobe(&input_event_kp);
