@@ -435,11 +435,18 @@ static void ksu_handle_sys_read(unsigned int fd)
         goto skip;
     }
 
+    // stop_init_rc_hook should only be called once
+    static bool rc_hook_stopped = false;
+    if (rc_hook_stopped) {
+        goto skip;
+    }
+
     // we only process the first read
     static bool rc_hooked = false;
     if (rc_hooked) {
         // we don't need these kprobe, unregister it!
         stop_init_rc_hook();
+        rc_hook_stopped = true;
         goto skip;
     }
     rc_hooked = true;
