@@ -14,6 +14,8 @@
 #define ZYGOTE_CONTEXT "u:r:zygote:s0"
 #define INIT_CONTEXT "u:r:init:s0"
 
+#ifdef CONFIG_KSU_SELINUX
+
 void setup_selinux(const char *, struct cred *);
 
 void setenforce(bool);
@@ -36,4 +38,5 @@ int handle_sepolicy(void __user *user_data, u64 data_len);
 
 void setup_ksu_cred();
 
+#endif
 #endif

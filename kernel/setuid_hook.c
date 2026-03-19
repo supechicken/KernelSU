@@ -16,7 +16,6 @@
 #include "setuid_hook.h"
 #include "klog.h" // IWYU pragma: keep
 #include "manager.h"
-#include "selinux/selinux.h"
 #include "seccomp_cache.h"
 #include "supercalls.h"
 #include "syscall_hook_manager.h"

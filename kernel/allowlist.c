@@ -67,7 +67,9 @@ static void init_default_profiles()
     memcpy(&default_root_profile.capabilities.effective, &full_cap,
            sizeof(default_root_profile.capabilities.effective));
     default_root_profile.namespaces = KSU_NS_INHERITED;
+#ifdef CONFIG_KSU_SELINUX
     strcpy(default_root_profile.selinux_domain, KSU_DEFAULT_SELINUX_DOMAIN);
+#endif
 
     // This means that we will umount modules by default!
     default_non_root_profile.umount_modules = true;
@@ -144,9 +146,11 @@ static bool profile_valid(struct app_profile *profile)
             return false;
         }
 
+#ifdef CONFIG_KSU_SELINUX
         if (strlen(profile->rp_config.profile.selinux_domain) == 0) {
             return false;
         }
+#endif
     }
 
     return true;
@@ -200,10 +204,16 @@ int ksu_set_app_profile(struct app_profile *profile)
 
     memcpy(&p->profile, profile, sizeof(*profile));
     if (profile->allow_su) {
+#ifdef CONFIG_KSU_SELINUX
         pr_info("set root profile, key: %s, uid: %d, gid: %d, context: %s\n",
                 profile->key, profile->current_uid,
                 profile->rp_config.profile.gid,
                 profile->rp_config.profile.selinux_domain);
+#else
+        pr_info("set root profile, key: %s, uid: %d, gid: %d\n",
+                profile->key, profile->current_uid,
+                profile->rp_config.profile.gid);
+#endif
     } else {
         pr_info("set app profile, key: %s, uid: %d, umount modules: %d\n",
                 profile->key, profile->current_uid,
@@ -289,8 +299,12 @@ bool __ksu_is_allow_uid(uid_t uid)
 bool __ksu_is_allow_uid_for_current(uid_t uid)
 {
     if (unlikely(uid == 0)) {
+#ifdef CONFIG_KSU_SELINUX
         // already root, but only allow our domain.
         return is_ksu_domain();
+#else
+        return true;
+#endif
     }
     return __ksu_is_allow_uid(uid);
 }

@@ -1,3 +1,4 @@
+#ifdef CONFIG_KSU_SELINUX
 #include "selinux.h"
 #include "linux/cred.h"
 #include "linux/sched.h"
@@ -207,3 +208,4 @@ bool is_init(const struct cred *cred)
 {
     return is_sid_match(cred, cached_init_sid, INIT_CONTEXT);
 }
+#endif

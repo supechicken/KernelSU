@@ -177,7 +177,9 @@ void escape_with_root_profile(void)
            sizeof(cred->cap_bset));
 
     setup_groups(&profile, cred);
+#ifdef CONFIG_KSU_SELINUX
     setup_selinux(profile.selinux_domain, cred);
+#endif
 
     commit_creds(cred);
 
@@ -202,6 +204,8 @@ void escape_to_root_for_init(void)
         return;
     }
 
+#ifdef CONFIG_KSU_SELINUX
     setup_selinux(KERNEL_SU_CONTEXT, cred);
+#endif
     commit_creds(cred);
 }
