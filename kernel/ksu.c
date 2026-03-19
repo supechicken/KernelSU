@@ -140,7 +140,7 @@ int __init kernelsu_init(void)
     }
 
 #ifdef MODULE
-#ifndef CONFIG_KSU_DEBUG
+#if !(defined(CONFIG_KSU_DEBUG) || defined(CONFIG_KSU_NON_ANDROID))
     kobject_del(&THIS_MODULE->mkobj.kobj);
 #endif
 #endif
