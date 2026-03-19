@@ -16,7 +16,6 @@
 #include "syscall_hook_manager.h"
 #include "sucompat.h"
 #include "setuid_hook.h"
-#include "selinux/selinux.h"
 #include "util.h"
 #include "ksud.h"
 
@@ -72,8 +71,13 @@ static void ksu_mark_running_process_locked()
         }
         int uid = task_uid(t).val;
         const struct cred *cred = get_task_cred(t);
+#ifdef CONFIG_KSU_SELINUX
         bool ksu_root_process = uid == 0 && is_task_ksu_domain(cred);
         bool is_zygote_process = is_zygote(cred);
+#else
+        bool ksu_root_process = uid == 0;
+        bool is_zygote_process = false;
+#endif
         bool is_shell = uid == 2000;
         // before boot completed, we shall mark init for marking zygote
         bool is_init = t->pid == 1;
@@ -250,6 +254,7 @@ static inline bool check_syscall_fastpath(int nr)
 }
 
 // Unmark init's child that are not zygote, adbd or ksud
+#ifdef CONFIG_KSU_SELINUX
 int ksu_handle_init_mark_tracker(const char __user **filename_user)
 {
     char path[64];
@@ -282,6 +287,7 @@ int ksu_handle_init_mark_tracker(const char __user **filename_user)
 
     return 0;
 }
+#endif
 
 #ifdef CONFIG_HAVE_SYSCALL_TRACEPOINTS
 // Generic sys_enter handler that dispatches to specific handlers
@@ -313,11 +319,15 @@ static void ksu_sys_enter_handler(void *data, struct pt_regs *regs, long id)
             if (id == __NR_execve) {
                 const char __user **filename_user =
                     (const char __user **)&PT_REGS_PARM1(regs);
+#ifdef CONFIG_KSU_SELINUX
                 if (current->pid != 1 && is_init(get_current_cred())) {
                     ksu_handle_init_mark_tracker(filename_user);
                 } else {
                     ksu_handle_execve_sucompat(filename_user, NULL, NULL, NULL);
                 }
+#else
+                ksu_handle_execve_sucompat(filename_user, NULL, NULL, NULL);
+#endif
                 return;
             }
         }

@@ -120,10 +120,12 @@ int __init kernelsu_init(void)
         ksu_boot_completed = true;
         track_throne(false);
 
+#ifdef CONFIG_KSU_SELINUX
         if (!getenforce()) {
             pr_info("Permissive SELinux, enforcing\n");
             setenforce(true);
         }
+#endif
 
     } else {
         ksu_syscall_hook_manager_init();
