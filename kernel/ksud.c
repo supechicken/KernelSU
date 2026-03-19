@@ -57,11 +57,14 @@ static const char KERNEL_SU_RC[] =
 
 static void stop_init_rc_hook();
 static void stop_execve_hook();
-static void stop_input_hook();
 
 static struct work_struct stop_init_rc_hook_work;
 static struct work_struct stop_execve_hook_work;
+
+#ifdef CONFIG_KSU_HANDLE_INPUT_EVENT
+static void stop_input_hook();
 static struct work_struct stop_input_hook_work;
+#endif
 
 void on_post_fs_data(void)
 {
@@ -75,8 +78,10 @@ void on_post_fs_data(void)
 
     ksu_load_allow_list();
     ksu_observer_init();
+#ifdef CONFIG_KSU_HANDLE_INPUT_EVENT
     // sanity check, this may influence the performance
     stop_input_hook();
+#endif
 }
 
 extern void ext4_unregister_sysfs(struct super_block *sb);
@@ -445,6 +450,7 @@ skip:
     fput(file);
 }
 
+#ifdef CONFIG_KSU_HANDLE_INPUT_EVENT
 static unsigned int volumedown_pressed_count = 0;
 
 static bool is_volumedown_enough(unsigned int count)
@@ -495,6 +501,7 @@ bool ksu_is_safe_mode()
 
     return false;
 }
+#endif
 
 static int sys_execve_handler_pre(struct kprobe *p, struct pt_regs *regs)
 {
@@ -585,6 +592,7 @@ static int sys_fstat_handler_post(struct kretprobe_instance *p,
     return 0;
 }
 
+#ifdef CONFIG_KSU_HANDLE_INPUT_EVENT
 static int input_handle_event_handler_pre(struct kprobe *p,
                                           struct pt_regs *regs)
 {
@@ -593,6 +601,7 @@ static int input_handle_event_handler_pre(struct kprobe *p,
     int *value = (int *)&PT_REGS_CCALL_PARM4(regs);
     return ksu_handle_input_handle_event(type, code, value);
 }
+#endif
 
 static struct kprobe execve_kp = {
     .symbol_name = SYS_EXECVE_SYMBOL,
@@ -611,10 +620,12 @@ static struct kretprobe sys_fstat_kp = {
     .data_size = sizeof(void *),
 };
 
+#ifdef CONFIG_KSU_HANDLE_INPUT_EVENT
 static struct kprobe input_event_kp = {
     .symbol_name = "input_event",
     .pre_handler = input_handle_event_handler_pre,
 };
+#endif
 
 static void do_stop_init_rc_hook(struct work_struct *work)
 {
@@ -627,10 +638,12 @@ static void do_stop_execve_hook(struct work_struct *work)
     unregister_kprobe(&execve_kp);
 }
 
+#ifdef CONFIG_KSU_HANDLE_INPUT_EVENT
 static void do_stop_input_hook(struct work_struct *work)
 {
     unregister_kprobe(&input_event_kp);
 }
+#endif
 
 static void stop_init_rc_hook()
 {
@@ -654,6 +667,7 @@ static void stop_execve_hook()
     pr_info("unregister execve kprobe: %d!\n", ret);
 }
 
+#ifdef CONFIG_KSU_HANDLE_INPUT_EVENT
 static void stop_input_hook()
 {
     static bool input_hook_stopped = false;
@@ -664,6 +678,7 @@ static void stop_input_hook()
     bool ret = schedule_work(&stop_input_hook_work);
     pr_info("unregister input kprobe: %d!\n", ret);
 }
+#endif
 
 // ksud: module support
 void ksu_ksud_init()
