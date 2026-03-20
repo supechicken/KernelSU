@@ -1,12 +1,15 @@
 #include "selinux.h"
 #include "linux/cred.h"
+#include "linux/file.h"
+#include "linux/mm.h"
 #include "linux/sched.h"
-#include "objsec.h"
 #include "linux/version.h"
 #include "../klog.h" // IWYU pragma: keep
 #include "../ksu.h"
 
 #ifdef CONFIG_KSU_SELINUX
+#include "objsec.h"
+
 /*
  * Cached SID values for frequently checked contexts.
  * These are resolved once at init and used for fast u32 comparison

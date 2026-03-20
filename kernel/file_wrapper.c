@@ -11,9 +11,8 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/version.h>
+#include <linux/module.h>
 #include <linux/mount.h>
-
-#include "objsec.h"
 
 #include "klog.h" // IWYU pragma: keep
 #include "selinux/selinux.h"
