@@ -13,8 +13,6 @@
 #include <linux/version.h>
 #include <linux/mount.h>
 
-#include "objsec.h"
-
 #include "klog.h" // IWYU pragma: keep
 #include "selinux/selinux.h"
 #include "ksud.h"

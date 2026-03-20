@@ -17,10 +17,6 @@ kernelsu-objs += file_wrapper.o
 kernelsu-objs += util.o
 
 kernelsu-objs += selinux/selinux.o
-kernelsu-objs += selinux/sepolicy.o
-kernelsu-objs += selinux/rules.o
-ccflags-y += -I$(srctree)/security/selinux -I$(srctree)/security/selinux/include
-ccflags-y += -I$(objtree)/security/selinux -include $(srctree)/include/uapi/asm-generic/errno.h
 
 obj-$(CONFIG_KSU) += kernelsu.o
 
@@ -30,7 +26,10 @@ ccflags-y += -DCONFIG_KSU_NON_ANDROID
 endif
 
 ifeq ($(CONFIG_KSU_SELINUX),y)
+kernelsu-objs += selinux/sepolicy.o
+kernelsu-objs += selinux/rules.o
 ccflags-y += -DCONFIG_KSU_SELINUX
+ccflags-y += -I$(srctree)/security/selinux -I$(srctree)/security/selinux/include
 endif
 
 ifeq ($(CONFIG_KSU_HANDLE_INPUT_EVENT),y)
@@ -40,6 +39,8 @@ endif
 ifeq ($(CONFIG_KSU_DEBUG),y)
 ccflags-y += -DCONFIG_KSU_DEBUG
 endif
+
+ccflags-y += -I$(objtree)/security/selinux -include $(srctree)/include/uapi/asm-generic/errno.h
 
 MDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 

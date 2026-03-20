@@ -1,7 +1,6 @@
 #include "selinux.h"
 #include "linux/cred.h"
 #include "linux/sched.h"
-#include "objsec.h"
 #include "linux/version.h"
 #include "../klog.h" // IWYU pragma: keep
 #include "../ksu.h"
@@ -210,7 +209,7 @@ bool is_init(const struct cred *cred)
 }
 #else
 // Check zygote/init by pathname instead
-static bool *compare_exec_filename(const char *filename) {
+static bool compare_exec_filename(const char *filename) {
     struct file *exe_file;
     bool result;
     char *buf, *pathname;
