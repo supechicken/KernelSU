@@ -13,7 +13,7 @@ config KSU
 
 config KSU_NON_ANDROID
 	bool "KernelSU for non-Android Linux distributions"
-	depends on KSU
+	depends on KSU && KALLSYMS
 	default n
 	help
 	  Enable running KernelSU on non-Android Linux
