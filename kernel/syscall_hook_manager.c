@@ -26,6 +26,9 @@
 static int tracepoint_reg_count = 0;
 static DEFINE_SPINLOCK(tracepoint_reg_lock);
 
+static bool enable_tracepoints = true;
+static int init_pid_global = 0;
+
 void ksu_clear_task_tracepoint_flag_if_needed(struct task_struct *t)
 {
     unsigned long flags;
@@ -290,7 +293,7 @@ int ksu_handle_init_mark_tracker(const char __user **filename_user)
 // Generic sys_enter handler that dispatches to specific handlers
 static void ksu_sys_enter_handler(void *data, struct pt_regs *regs, long id)
 {
-    if (unlikely(check_syscall_fastpath(id))) {
+    if (unlikely(enable_tracepoints && check_syscall_fastpath(id))) {
         if (ksu_su_compat_enabled) {
             // Handle newfstatat
             if (id == __NR_newfstatat) {
@@ -338,12 +341,25 @@ static void ksu_sys_enter_handler(void *data, struct pt_regs *regs, long id)
 #endif
 
 #ifdef CONFIG_KSU_NON_ANDROID
-void ksu_exec_handler(void *data, struct task_struct *p, pid_t old_pid, struct linux_binprm *bprm)
+static void ksu_exec_handler(void *data, struct task_struct *p, pid_t old_pid, struct linux_binprm *bprm)
 {
     // Set tracepoint flag for init process
-    if (task_pid_vnr(p) == 1 && strcmp(bprm->filename, "/system/bin/init") == 0) {
-        pr_info("hook_manager: Android init namespace started\n");
+    if (unlikely(enable_tracepoints && task_pid_vnr(p) == 1 && strcmp(bprm->filename, "/system/bin/init") == 0)) {
+        init_pid_global = p->pid;
+        pr_info("hook_manager: Android init (PID %i) namespace started\n", init_pid_global);
         ksu_set_task_tracepoint_flag(p);
+    }
+}
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 16, 0)
+static void ksu_exit_handler(void *data, struct task_struct *p, bool group_dead)
+#else
+static void ksu_exit_handler(void *data, struct task_struct *p)
+#endif
+{
+    if (unlikely(enable_tracepoints && p->pid == init_pid_global)) {
+        enable_tracepoints = false;
+        pr_info("hook_manager: Android init (PID %i) namespace died\n", init_pid_global);
     }
 }
 #endif
@@ -384,6 +400,15 @@ void ksu_syscall_hook_manager_init(void)
     } else {
         pr_info("hook_manager: sched_process_exec tracepoint registered\n");
     }
+
+    ret = register_trace_sched_process_exit(ksu_exit_handler, NULL);
+
+    if (ret) {
+        pr_err("hook_manager: failed to register sched_process_exit tracepoint: %d\n",
+               ret);
+    } else {
+        pr_info("hook_manager: sched_process_exit tracepoint registered\n");
+    }
 #endif
 
     ksu_setuid_hook_init();
@@ -403,6 +428,10 @@ void ksu_syscall_hook_manager_exit(void)
     unregister_trace_sched_process_exec(ksu_exec_handler, NULL);
     tracepoint_synchronize_unregister();
     pr_info("hook_manager: sched_process_exec tracepoint unregistered\n");
+
+    unregister_trace_sched_process_exit(ksu_exit_handler, NULL);
+    tracepoint_synchronize_unregister();
+    pr_info("hook_manager: sched_process_exit tracepoint unregistered\n");
 #endif
 
 #ifdef CONFIG_KRETPROBES

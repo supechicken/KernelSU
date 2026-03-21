@@ -231,7 +231,7 @@ static bool compare_exec_filename(const char *filename) {
     pathname = exe_file ? d_path(&exe_file->f_path, buf, PATH_MAX) : NULL;
     result = !!strstr(buf, filename);
 
-    fput(exe_file);
+    if (pathname) fput(exe_file);
     kfree(buf);
     return result;
 }
