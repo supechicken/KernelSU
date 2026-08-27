@@ -283,10 +283,12 @@ bool __ksu_is_allow_uid(uid_t uid)
 
 bool __ksu_is_allow_uid_for_current(uid_t uid)
 {
+#ifdef CONFIG_KSU_SELINUX
     if (unlikely(uid == 0)) {
         // already root, but only allow our domain.
         return is_ksu_domain();
     }
+#endif
     return __ksu_is_allow_uid(uid);
 }
 
