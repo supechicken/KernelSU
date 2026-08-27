@@ -1,3 +1,4 @@
+#ifdef CONFIG_KSU_SELINUX
 #include "ss/avtab.h"
 #include "ss/constraint.h"
 #include "ss/ebitmap.h"
@@ -979,3 +980,4 @@ out_free_data:
 
     return ERR_PTR(ret);
 }
+#endif
